@@ -103,3 +103,27 @@ Obsidian Local REST API. Client components never call the Obsidian API directly.
   package globally, since Vitest/jsdom never sets Next's `react-server` resolve condition that the
   real package depends on. Mock `undici` (not global `fetch`) when testing code that goes through
   `obsidian/client.ts` (see `tests/lib/obsidian-client.test.ts`).
+
+## Pull requests
+
+Before opening a PR, run `/code-review` against the diff — also enforced by a `PreToolUse` hook in
+`.claude/settings.json` that blocks PR-creation tools until it's been run in the session.
+
+If the diff touches `src/components/**` or `src/app/**` (i.e. changes rendered UI), include
+before/after screenshots in the PR description:
+
+1. Run `npm run dev:mock` and drive the affected view with Playwright (chromium is pre-installed at
+   `/opt/pw-browsers/chromium`; see the `run` skill). Capture "before" against the base branch
+   (e.g. a second checkout/worktree of the pre-change code) and "after" against the current branch.
+2. Commit the PNGs to the PR branch under `.github/pr-screenshots/<branch-name>/{before,after}.png`
+   — the GitHub API has no endpoint for uploading images directly into a PR body, so committing
+   them and linking via `raw.githubusercontent.com` is the reliable path.
+3. Embed them in the PR body, e.g.:
+   ```markdown
+   | Before | After |
+   |---|---|
+   | ![before](https://raw.githubusercontent.com/eh6gac4/corvexio/<branch-name>/.github/pr-screenshots/<branch-name>/before.png) | ![after](https://raw.githubusercontent.com/eh6gac4/corvexio/<branch-name>/.github/pr-screenshots/<branch-name>/after.png) |
+   ```
+
+This is documented workflow guidance, not hook-enforced — screenshotting requires driving a real
+browser, which isn't reliable to gate mechanically.
