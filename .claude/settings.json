@@ -1,0 +1,39 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "payload=$(cat); sid=$(echo \"$payload\" | jq -r '.session_id'); skill=$(echo \"$payload\" | jq -r '.tool_input.skill // empty'); if [ \"$skill\" = \"code-review\" ] && [ -n \"$sid\" ]; then touch \"/tmp/claude-code-review-$sid.done\"; fi",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "mcp__github__create_pull_request",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sid=$(jq -r '.session_id'); if [ -f \"/tmp/claude-code-review-$sid.done\" ]; then echo '{\"continue\": true}'; else echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"Run /code-review on this diff before opening a PR — no code review has been recorded yet this session.\"}}'; fi",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(gh pr create *)",
+            "command": "sid=$(jq -r '.session_id'); if [ -f \"/tmp/claude-code-review-$sid.done\" ]; then echo '{\"continue\": true}'; else echo '{\"decision\":\"block\",\"reason\":\"Run /code-review on this diff before opening a PR — no code review has been recorded yet this session.\"}'; fi",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
