@@ -18,12 +18,12 @@ MVP scope, intentionally: full-text search only (no tag/backlink browsing), whol
 
 ```bash
 npm install
-npm run dev:mock       # mock Obsidian server (https://127.0.0.1:27124) + `next dev`, concurrently
-npm run dev             # next dev only — needs .env.local pointing at a real vault
-npm test                 # vitest run (all tests)
-npm run test:watch    # vitest watch mode
-npm run build           # type-checks and builds the production bundle (tsc via next build)
-npm run lint             # eslint .
+npm run dev:mock   # mock Obsidian server (https://127.0.0.1:27124) + `next dev`, concurrently
+npm run dev        # next dev only — needs .env.local pointing at a real vault
+npm test           # vitest run (all tests)
+npm run test:watch # vitest watch mode
+npm run build      # type-checks and builds the production bundle (tsc via next build)
+npm run lint       # eslint .
 ```
 
 Run a single test file or test case with vitest directly, e.g.:
@@ -51,10 +51,10 @@ temporarily unreachable vault/VPN won't crash-loop the container.
 Obsidian Local REST API. Client components never call the Obsidian API directly.
 
 - **`src/lib/obsidian/client.ts`** — the only module that reads `OBSIDIAN_API_KEY`. Marked
-  `import "server-only"`, so importing it from client code is a build error. Uses a dedicated
-  `undici` `Agent` (not global `fetch`) so TLS verification (`OBSIDIAN_TLS_INSECURE`, for the
-  Local REST API's self-signed cert) is scoped to this one upstream connection, and so Next's
-  fetch-cache layer (unwanted against a mutable vault) is bypassed entirely. Exports
+  `import "server-only"` (line 1), so importing it from client code is a build error. Uses a
+  dedicated `undici` `Agent` (not global `fetch`) so TLS verification (`OBSIDIAN_TLS_INSECURE`,
+  for the Local REST API's self-signed cert) is scoped to this one upstream connection, and so
+  Next's fetch-cache layer (unwanted against a mutable vault) is bypassed entirely. Exports
   `obsidianFetch` (raw), `obsidianFetchJson`, `obsidianFetchText`, and the `ObsidianConfigError` /
   `ObsidianApiError` error classes.
 - **`src/lib/obsidian/paths.ts`** — vault path helpers. Segments are percent-encoded individually
@@ -66,8 +66,8 @@ Obsidian Local REST API. Client components never call the Obsidian API directly.
 - **`src/app/api/*`** — thin Route Handlers that call `obsidianFetch*`, translate errors via
   `apiErrorResponse` (`src/lib/api-error.ts`), and return the shared types above.
   - `tree` — lists a vault directory, sorts directories first then alphabetically.
-  - `file` — GET/PUT/DELETE a single file (whole-file content); PATCH is plumbed through for
-    future partial edits but unused by the UI.
+  - `file` — GET/PUT/DELETE a single file (whole-file content); PATCH is plumbed through
+    (`src/app/api/file/route.ts:63-96`) for future partial edits but unused by the UI.
   - `search` — wraps `/search/simple/`; note the upstream takes `query`/`contextLength` as URL
     query params on a POST, not a JSON body.
   - `status` — pings the upstream with a 3s timeout, never throws (used for the connectivity
@@ -91,15 +91,15 @@ Obsidian Local REST API. Client components never call the Obsidian API directly.
 - Import via the `@/*` path alias (maps to `src/*`), configured identically in `tsconfig.json` and
   `vitest.config.mts`.
 - Error handling in Route Handlers goes through `ApiError` (our own validation errors) /
-  `ObsidianConfigError` / `ObsidianApiError`, all funneled through `apiErrorResponse` for a
-  consistent `{ error }` JSON shape and status code.
+  `ObsidianConfigError` / `ObsidianApiError`, all funneled through `apiErrorResponse`
+  (`src/lib/api-error.ts:15-30`) for a consistent `{ error }` JSON shape and status code.
 - Comments in this codebase explain *why*, not *what* — e.g. noting an upstream API quirk or a
   deliberate scope limitation. Match that style rather than narrating obvious code.
-- `react-hooks/set-state-in-effect` is deliberately disabled in `eslint.config.mjs`: the MVP uses
-  plain `useState` + `fetch` in `useEffect` (no React Query/Suspense) by design — don't "fix" this
-  pattern.
+- `react-hooks/set-state-in-effect` is deliberately disabled (`eslint.config.mjs:13`): the MVP
+  uses plain `useState` + `fetch` in `useEffect` (no React Query/Suspense) by design — don't
+  "fix" this pattern.
 - Tests live under `tests/`, mirroring `src/` (`tests/lib`, `tests/components`), and are excluded
   from `tsconfig.json`'s main program and from `eslint`. `tests/setup.ts` mocks the `server-only`
   package globally, since Vitest/jsdom never sets Next's `react-server` resolve condition that the
   real package depends on. Mock `undici` (not global `fetch`) when testing code that goes through
-  `obsidian/client.ts`.
+  `obsidian/client.ts` (see `tests/lib/obsidian-client.test.ts`).
