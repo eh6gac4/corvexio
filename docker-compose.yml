@@ -1,0 +1,20 @@
+services:
+  corvexio:
+    build: .
+    container_name: corvexio
+    # Real values live only on N100, in a gitignored .env.production
+    # (copy .env.local.example as a starting point).
+    env_file:
+      - .env.production
+    ports:
+      - "3000:3000"
+      # For defense in depth, consider binding only to the WireGuard interface
+      # IP once it's known on N100, e.g. "10.x.x.x:3000:3000", instead of all
+      # interfaces.
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
