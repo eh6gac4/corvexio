@@ -23,6 +23,10 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 USER nextjs
 EXPOSE 3000
 ENV PORT=3000
+# Docker sets HOSTNAME to the container ID by default, which the Next.js standalone
+# server resolves and binds to instead of all interfaces — breaking both the
+# HEALTHCHECK below (127.0.0.1) and any access that isn't through docker-proxy.
+ENV HOSTNAME="0.0.0.0"
 
 # Only checks our own process, not the Obsidian backend — a temporarily
 # unreachable vault/VPN shouldn't crash-loop the container.
