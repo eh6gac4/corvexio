@@ -5,11 +5,20 @@ services:
     # Deployed via a Portainer "Git repository" stack, so there's no .env.production
     # file on disk to env_file from — Portainer injects these as stack environment
     # variables instead (see README.md). For a local `docker compose up`, put the
-    # same three vars in a gitignored .env file (copy .env.local.example).
+    # same vars in a gitignored .env file (copy .env.local.example). If you add a new
+    # OBSIDIAN_* var to .env.local.example, add it here too — this list isn't
+    # auto-synced with the example file.
     environment:
       OBSIDIAN_API_URL: ${OBSIDIAN_API_URL}
       OBSIDIAN_API_KEY: ${OBSIDIAN_API_KEY}
       OBSIDIAN_TLS_INSECURE: ${OBSIDIAN_TLS_INSECURE:-false}
+      # Observed on the N100's Docker engine: baking `ENV HOSTNAME="0.0.0.0"` into the
+      # Dockerfile was silently overridden back to the container ID at container
+      # creation, while setting it here (compose-level) stuck. Setting it here is what
+      # actually made the Next.js standalone server (which binds to $HOSTNAME) listen
+      # on all interfaces instead of just the container's own bridge IP — needed for
+      # both the healthcheck below (127.0.0.1) and any access not proxied by Docker.
+      HOSTNAME: "0.0.0.0"
     ports:
       - "3100:3000"
       # Host port 3000 is already taken by another container on the N100, hence 3100.
