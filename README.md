@@ -50,10 +50,13 @@ Builds to a standalone Docker image:
 docker build -t corvexio .
 ```
 
-`docker-compose.yml` runs it with `env_file: .env.production` (gitignored — copy
-`.env.local.example` as a starting point with real vault credentials). The container's
-`/api/health` endpoint never depends on the Obsidian backend being reachable, so a temporarily
-unreachable vault/VPN won't crash-loop the container.
+Deployed as a Portainer "Git repository" stack pointing at this repo's `docker-compose.yml`, with
+`OBSIDIAN_API_URL` / `OBSIDIAN_API_KEY` / `OBSIDIAN_TLS_INSECURE` set as stack environment
+variables in the Portainer UI (there's no `.env.production` file on disk in that setup, since
+Portainer clones the repo fresh on each deploy). For a local `docker compose up` instead, put the
+same three vars in a gitignored `.env` file (copy `.env.local.example` as a starting point). The
+container's `/api/health` endpoint never depends on the Obsidian backend being reachable, so a
+temporarily unreachable vault/VPN won't crash-loop the container.
 
 ## Architecture notes
 

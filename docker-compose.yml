@@ -2,14 +2,19 @@ services:
   corvexio:
     build: .
     container_name: corvexio
-    # Real values live only on N100, in a gitignored .env.production
-    # (copy .env.local.example as a starting point).
-    env_file:
-      - .env.production
+    # Deployed via a Portainer "Git repository" stack, so there's no .env.production
+    # file on disk to env_file from — Portainer injects these as stack environment
+    # variables instead (see README.md). For a local `docker compose up`, put the
+    # same three vars in a gitignored .env file (copy .env.local.example).
+    environment:
+      OBSIDIAN_API_URL: ${OBSIDIAN_API_URL}
+      OBSIDIAN_API_KEY: ${OBSIDIAN_API_KEY}
+      OBSIDIAN_TLS_INSECURE: ${OBSIDIAN_TLS_INSECURE:-false}
     ports:
-      - "3000:3000"
+      - "3100:3000"
+      # Host port 3000 is already taken by another container on the N100, hence 3100.
       # For defense in depth, consider binding only to the WireGuard interface
-      # IP once it's known on N100, e.g. "10.x.x.x:3000:3000", instead of all
+      # IP once it's known on N100, e.g. "10.x.x.x:3100:3000", instead of all
       # interfaces.
     restart: unless-stopped
     healthcheck:
