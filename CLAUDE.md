@@ -40,7 +40,10 @@ To develop against a real vault, copy `.env.local.example` to `.env.local` and f
 `OBSIDIAN_API_URL`/`OBSIDIAN_API_KEY` from Obsidian → Settings → Local REST API, then `npm run dev`.
 
 Docker build: `docker build -t corvexio .` (multi-stage, `output: "standalone"`).
-`docker-compose.yml` runs it with `env_file: .env.production` (gitignored — base it on
+Deployed on the N100 as a Portainer "Git repository" stack — Portainer clones this repo fresh per
+deploy, so `OBSIDIAN_API_URL`/`OBSIDIAN_API_KEY`/`OBSIDIAN_TLS_INSECURE` are set as stack
+environment variables in the Portainer UI rather than an `.env.production` file. For a local
+`docker compose up`, put the same three vars in a gitignored `.env` (base it on
 `.env.local.example`). `/api/health` never depends on the Obsidian backend being reachable, so a
 temporarily unreachable vault/VPN won't crash-loop the container.
 
