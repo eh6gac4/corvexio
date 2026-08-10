@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Editor } from "@/components/Editor";
 import { EditorToolbar } from "@/components/EditorToolbar";
 import { deleteFile, fetchFile, saveFile } from "@/lib/api-client";
+import { decodeEditPath } from "@/lib/vault-route";
 
 interface PageProps {
   params: Promise<{ path: string[] }>;
@@ -12,20 +13,7 @@ interface PageProps {
 
 export default function EditPage({ params }: PageProps) {
   const { path: pathSegments } = use(params);
-  // Next.js (16.2) does not decode catch-all route segments, so paths built
-  // by editHref()'s per-segment encodeURIComponent arrive here still encoded.
-  // Segments from outside editHref (hand-typed or externally shared URLs)
-  // may contain invalid escapes, so fall back to the raw segment rather
-  // than letting decodeURIComponent throw and crash the page.
-  const path = pathSegments
-    .map((segment) => {
-      try {
-        return decodeURIComponent(segment);
-      } catch {
-        return segment;
-      }
-    })
-    .join("/");
+  const path = decodeEditPath(pathSegments);
 
   const router = useRouter();
   const searchParams = useSearchParams();
