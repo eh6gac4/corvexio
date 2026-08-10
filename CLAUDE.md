@@ -78,6 +78,15 @@ Obsidian Local REST API. Client components never call the Obsidian API directly.
   - `health` — container healthcheck; must stay independent of the Obsidian backend.
 - **`src/lib/api-client.ts`** — `"use client"` fetch wrappers around `/api/*` for components to
   call. Keep this as the single place components go through to reach the backend.
+- **`src/proxy.ts`** + **`src/lib/access-jwt.ts`** — optional Cloudflare Access gate for
+  deployments exposed outside the LAN (Next.js 16 renamed the `middleware.ts` convention to
+  `proxy.ts`; a `proxy` function, not `middleware`, is the required export). Only active when
+  both `CF_ACCESS_TEAM_DOMAIN` and `CF_ACCESS_AUD` are set — otherwise it's a no-op, so LAN-only
+  deploys and `npm run dev:mock` need no auth setup. When active, every request except
+  `/api/health` must carry a `Cf-Access-Jwt-Assertion` header that verifies against Cloudflare's
+  JWKS (`https://<team>.cloudflareaccess.com/cdn-cgi/access/certs`, cached at module scope in
+  `access-jwt.ts`); anything else gets a 403. This app has no auth of its own, so this is the only
+  thing gating full vault read/write access when reachable from the internet.
 - **`src/app/(shell)/`** — the app shell. `layout.tsx` renders `Sidebar` + `StatusBanner` and
   toggles single-pane vs. two-pane layout based on whether the current route is under `/edit/`
   (mobile-first: sidebar OR editor pane visible on narrow viewports, both on desktop). The route

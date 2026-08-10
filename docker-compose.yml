@@ -12,6 +12,11 @@ services:
       OBSIDIAN_API_URL: ${OBSIDIAN_API_URL}
       OBSIDIAN_API_KEY: ${OBSIDIAN_API_KEY}
       OBSIDIAN_TLS_INSECURE: ${OBSIDIAN_TLS_INSECURE:-false}
+      # Both empty by default (Access auth disabled) for local `docker compose up`; the
+      # N100 stack sets these to require a valid Cloudflare Access JWT — see
+      # src/lib/access-jwt.ts and .env.local.example.
+      CF_ACCESS_TEAM_DOMAIN: ${CF_ACCESS_TEAM_DOMAIN:-}
+      CF_ACCESS_AUD: ${CF_ACCESS_AUD:-}
       # Observed on the N100's Docker engine: baking `ENV HOSTNAME="0.0.0.0"` into the
       # Dockerfile was silently overridden back to the container ID at container
       # creation, while setting it here (compose-level) stuck. Setting it here is what
@@ -20,11 +25,11 @@ services:
       # both the healthcheck below (127.0.0.1) and any access not proxied by Docker.
       HOSTNAME: "0.0.0.0"
     ports:
-      - "3100:3000"
+      - "127.0.0.1:3100:3000"
       # Host port 3000 is already taken by another container on the N100, hence 3100.
-      # For defense in depth, consider binding only to the WireGuard interface
-      # IP once it's known on N100, e.g. "10.x.x.x:3100:3000", instead of all
-      # interfaces.
+      # Bound to loopback only: external access goes through the N100's cloudflared
+      # tunnel (host network, so it can still reach 127.0.0.1:3100) fronted by
+      # Cloudflare Access, not a direct LAN port. See src/lib/access-jwt.ts.
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
