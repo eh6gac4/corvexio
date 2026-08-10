@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Editor } from "@/components/Editor";
 import { EditorToolbar } from "@/components/EditorToolbar";
 import { deleteFile, fetchFile, saveFile } from "@/lib/api-client";
+import { decodeEditPath } from "@/lib/vault-route";
 
 interface PageProps {
   params: Promise<{ path: string[] }>;
@@ -12,7 +13,7 @@ interface PageProps {
 
 export default function EditPage({ params }: PageProps) {
   const { path: pathSegments } = use(params);
-  const path = pathSegments.join("/");
+  const path = decodeEditPath(pathSegments);
 
   const router = useRouter();
   const searchParams = useSearchParams();
