@@ -23,7 +23,7 @@ export function FileTree() {
     };
   }, []);
 
-  if (error) return <p className="p-3 text-sm text-red-600">{error}</p>;
+  if (error) return <p className="p-3 text-sm text-red-600 dark:text-red-400">{error}</p>;
   if (!entries) return <p className="p-3 text-sm text-zinc-500">読み込み中…</p>;
   if (entries.length === 0) return <p className="p-3 text-sm text-zinc-500">Vaultは空です。</p>;
 

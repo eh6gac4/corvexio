@@ -17,13 +17,13 @@ exports[`EditorToolbar > matches snapshot for a clean, unsaved-changes-free file
       Welcome.md
     </span>
     <button
-      class="rounded px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
+      class="rounded px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950"
       type="button"
     >
       削除
     </button>
     <button
-      class="rounded bg-zinc-900 px-3 py-1.5 text-sm text-white disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-900"
+      class="rounded bg-zinc-900 px-3 py-1.5 text-sm text-white hover:bg-zinc-700 disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
       disabled=""
       type="button"
     >
@@ -49,20 +49,20 @@ exports[`EditorToolbar > matches snapshot for a dirty file that is saving 1`] = 
     >
       Projects/Ideas.md
       <span
-        class="ml-1.5 text-amber-600"
+        class="ml-1.5 text-amber-600 dark:text-amber-400"
         title="未保存の変更があります"
       >
         ●
       </span>
     </span>
     <button
-      class="rounded px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
+      class="rounded px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950"
       type="button"
     >
       削除
     </button>
     <button
-      class="rounded bg-zinc-900 px-3 py-1.5 text-sm text-white disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-900"
+      class="rounded bg-zinc-900 px-3 py-1.5 text-sm text-white hover:bg-zinc-700 disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
       disabled=""
       type="button"
     >

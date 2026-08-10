@@ -3,6 +3,9 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  /* Lets native UI (form controls, scrollbars, window.prompt) follow the
+     page's dark mode instead of staying stuck in the light OS default. */
+  color-scheme: light dark;
 }
 
 @theme inline {

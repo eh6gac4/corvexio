@@ -18,7 +18,7 @@ export function NewFileButton() {
       type="button"
       onClick={handleClick}
       aria-label="新規ファイル"
-      className="absolute bottom-5 right-5 flex h-14 w-14 items-center justify-center rounded-full bg-zinc-900 text-2xl leading-none text-white shadow-lg hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900"
+      className="absolute bottom-5 right-5 flex h-14 w-14 items-center justify-center rounded-full bg-zinc-900 text-2xl leading-none text-white shadow-lg hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
     >
       +
     </button>
