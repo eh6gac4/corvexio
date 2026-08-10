@@ -67,16 +67,24 @@ export function obsidianFetch(path: string, init: ObsidianRequestInit = {}) {
   });
 }
 
-async function throwObsidianError(response: {
-  status: number;
-  json: () => Promise<unknown>;
-}): Promise<never> {
+async function throwObsidianError(
+  path: string,
+  method: string,
+  response: {
+    status: number;
+    json: () => Promise<unknown>;
+  },
+): Promise<never> {
   let body: unknown;
   try {
     body = await response.json();
   } catch {
     body = undefined;
   }
+  console.error(
+    `[obsidian] ${method} ${path} -> ${response.status}`,
+    body ?? "(no body)",
+  );
   throw new ObsidianApiError(
     `Obsidian API request failed with status ${response.status}`,
     response.status,
@@ -94,7 +102,7 @@ export async function obsidianFetchJson<T>(
     headers: { Accept: "application/json", ...init?.headers },
   });
   if (!response.ok) {
-    await throwObsidianError(response);
+    await throwObsidianError(path, init?.method ?? "GET", response);
   }
   return (await response.json()) as T;
 }
@@ -109,7 +117,7 @@ export async function obsidianFetchText(
     headers: { Accept: "text/markdown", ...init?.headers },
   });
   if (!response.ok) {
-    await throwObsidianError(response);
+    await throwObsidianError(path, init?.method ?? "GET", response);
   }
   return response.text();
 }
