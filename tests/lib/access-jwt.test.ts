@@ -58,6 +58,20 @@ describe("access-jwt", () => {
     expect(isAccessAuthEnabled()).toBe(false);
   });
 
+  it("flags misconfiguration when only one env var is set, but not when both or neither are", async () => {
+    const { isAccessAuthMisconfigured } = await import("@/lib/access-jwt");
+    expect(isAccessAuthMisconfigured()).toBe(false);
+
+    delete process.env.CF_ACCESS_AUD;
+    expect(isAccessAuthMisconfigured()).toBe(true);
+
+    delete process.env.CF_ACCESS_TEAM_DOMAIN;
+    expect(isAccessAuthMisconfigured()).toBe(false);
+
+    process.env.CF_ACCESS_AUD = AUD;
+    expect(isAccessAuthMisconfigured()).toBe(true);
+  });
+
   it("accepts a token with a valid signature, issuer, and audience", async () => {
     const { privateKey, fetchMock } = await setUpKeys();
     globalThis.fetch = fetchMock as unknown as typeof fetch;

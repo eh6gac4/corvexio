@@ -86,7 +86,9 @@ Obsidian Local REST API. Client components never call the Obsidian API directly.
   `/api/health` must carry a `Cf-Access-Jwt-Assertion` header that verifies against Cloudflare's
   JWKS (`https://<team>.cloudflareaccess.com/cdn-cgi/access/certs`, cached at module scope in
   `access-jwt.ts`); anything else gets a 403. This app has no auth of its own, so this is the only
-  thing gating full vault read/write access when reachable from the internet.
+  thing gating full vault read/write access when reachable from the internet. If only one of the
+  two env vars is set (e.g. a typo), the proxy fails closed with a 500 rather than silently
+  disabling auth — see `isAccessAuthMisconfigured()`.
 - **`src/app/(shell)/`** — the app shell. `layout.tsx` renders `Sidebar` + `StatusBanner` and
   toggles single-pane vs. two-pane layout based on whether the current route is under `/edit/`
   (mobile-first: sidebar OR editor pane visible on narrow viewports, both on desktop). The route
