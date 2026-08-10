@@ -22,7 +22,7 @@ export function EditorToolbar({ path, dirty, saving, onSave, onDelete }: Props) 
       <span className="flex-1 truncate text-sm font-medium">
         {path}
         {dirty && (
-          <span className="ml-1.5 text-amber-600" title="未保存の変更があります">
+          <span className="ml-1.5 text-amber-600 dark:text-amber-400" title="未保存の変更があります">
             ●
           </span>
         )}
@@ -30,7 +30,7 @@ export function EditorToolbar({ path, dirty, saving, onSave, onDelete }: Props) 
       <button
         type="button"
         onClick={onDelete}
-        className="rounded px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
+        className="rounded px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950"
       >
         削除
       </button>
@@ -38,7 +38,7 @@ export function EditorToolbar({ path, dirty, saving, onSave, onDelete }: Props) 
         type="button"
         onClick={onSave}
         disabled={!dirty || saving}
-        className="rounded bg-zinc-900 px-3 py-1.5 text-sm text-white disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-900"
+        className="rounded bg-zinc-900 px-3 py-1.5 text-sm text-white hover:bg-zinc-700 disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
       >
         {saving ? "保存中…" : "保存"}
       </button>

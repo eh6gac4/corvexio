@@ -57,7 +57,10 @@ export function FileTreeNode({ entry, depth }: Props) {
               </li>
             )}
             {error && (
-              <li className="py-1.5 text-xs text-red-600" style={{ paddingLeft: indent + 20 }}>
+              <li
+                className="py-1.5 text-xs text-red-600 dark:text-red-400"
+                style={{ paddingLeft: indent + 20 }}
+              >
                 {error}
               </li>
             )}

@@ -48,10 +48,12 @@ export function SearchBox() {
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Vaultを検索…"
         aria-label="Vaultを検索"
-        className="w-full rounded border border-zinc-300 bg-white px-3 py-2.5 text-sm focus:border-zinc-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
+        className="w-full rounded border border-zinc-300 bg-white px-3 py-2.5 text-sm placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
       />
       {!queryTooShort && loading && <p className="mt-2 text-xs text-zinc-500">検索中…</p>}
-      {!queryTooShort && error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+      {!queryTooShort && error && (
+        <p className="mt-2 text-xs text-red-600 dark:text-red-400">{error}</p>
+      )}
       {!queryTooShort && results && <SearchResults results={results} />}
     </div>
   );
