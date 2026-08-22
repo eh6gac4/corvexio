@@ -13,19 +13,23 @@ export function editHref(path: string): string {
 }
 
 /**
+ * Decodes one route-segment string back to its raw form, falling back to
+ * the raw segment on an invalid escape (segments from outside this app's own
+ * hrefs — hand-typed or externally shared URLs — may contain invalid ones)
+ * rather than letting decodeURIComponent throw.
+ */
+export function decodeVaultSegment(segment: string): string {
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return segment;
+  }
+}
+
+/**
  * Decodes a [...path] route's params.path segments back into a raw vault
- * path. Segments from outside editHref (hand-typed or externally shared
- * URLs) may contain invalid escapes, so each segment falls back to its raw
- * form rather than letting decodeURIComponent throw.
+ * path.
  */
 export function decodeEditPath(segments: string[]): string {
-  return segments
-    .map((segment) => {
-      try {
-        return decodeURIComponent(segment);
-      } catch {
-        return segment;
-      }
-    })
-    .join("/");
+  return segments.map(decodeVaultSegment).join("/");
 }
