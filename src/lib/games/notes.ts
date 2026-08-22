@@ -1,5 +1,6 @@
 import { parseChecklist } from "@/lib/games/checklist";
 import { parseFrontmatter, type FrontmatterValue } from "@/lib/games/frontmatter";
+import { decodeVaultSegment } from "@/lib/vault-route";
 import { DEFAULT_NOTE_TYPE, type GameNote } from "@/types/games";
 
 function asString(value: FrontmatterValue | undefined): string | undefined {
@@ -44,12 +45,27 @@ export function gameNoteHref(game: string, path: string): string {
 }
 
 /**
- * Rebuilds a note's vault path from a `[slug]/[note]` route pair. Unlike
- * `/edit/[...path]` (a catch-all, which Next.js does NOT auto-decode — see
- * `decodeEditPath` in src/lib/vault-route.ts), `[slug]` and `[note]` are
- * ordinary dynamic segments, which Next.js DOES decode before handing them
- * to the page. Decoding again here would double-decode a `%` in a filename.
+ * Rebuilds a note's vault path from a `[slug]/[note]` route pair.
+ *
+ * This decode is required, not optional, in this app's actual runtime
+ * (`output: "standalone"` + `node server.js`, i.e. how it's built and run
+ * in Docker/Portainer): `[slug]`/`[note]` arrive from the router still
+ * percent-encoded, same as the `/edit/[...path]` catch-all (see
+ * `decodeEditPath` in src/lib/vault-route.ts). Without it, the raw `%XX`
+ * sequences get encoded a second time downstream (encodeVaultPath ->
+ * obsidianFetch) and the vault 404s.
+ *
+ * This was removed once already (assuming Next.js auto-decodes ordinary
+ * dynamic segments) and broke every non-ASCII filename in production —
+ * reproduced against a real N100 deployment (upstream logged
+ * `%25E7%25A0...` double-encoded paths) and re-verified locally by running
+ * the actual `node .next/standalone/.../server.js` binary (not `next dev`,
+ * where the difference doesn't show) and clicking through real Games/
+ * notes, including one with an emoji filename. Don't remove it again
+ * without repeating that same standalone-server verification — a static
+ * read of Next.js's route-decoding docs does not settle this for this
+ * codebase's runtime.
  */
 export function decodeGameNotePath(slug: string, note: string): string {
-  return `Games/${slug}/${note}`;
+  return `Games/${decodeVaultSegment(slug)}/${decodeVaultSegment(note)}`;
 }
