@@ -3,6 +3,7 @@
 import { use, useMemo, useState } from "react";
 import Link from "next/link";
 import { AsyncStatus } from "@/components/AsyncStatus";
+import { Chips } from "@/components/games/Chips";
 import { useGameNotes } from "@/lib/games/useGameNotes";
 import { gameNoteHref } from "@/lib/games/notes";
 import type { GameNote } from "@/types/games";
@@ -12,35 +13,6 @@ const PRIORITY_FILTERS = ["all", "must", "should", "could"] as const;
 
 type StatusFilter = (typeof STATUS_FILTERS)[number];
 type PriorityFilter = (typeof PRIORITY_FILTERS)[number];
-
-function FilterChips<T extends string>({
-  options,
-  value,
-  onChange,
-}: {
-  options: readonly T[];
-  value: T;
-  onChange: (value: T) => void;
-}) {
-  return (
-    <div className="flex flex-wrap gap-1.5">
-      {options.map((option) => (
-        <button
-          key={option}
-          type="button"
-          onClick={() => onChange(option)}
-          className={`rounded-full px-3 py-1 text-xs ${
-            option === value
-              ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-              : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
-          }`}
-        >
-          {option}
-        </button>
-      ))}
-    </div>
-  );
-}
 
 function checklistProgress(note: GameNote): string | null {
   if (note.checklist.length === 0) return null;
@@ -81,8 +53,8 @@ export function GameNotesView({ slug }: { slug: string }) {
   return (
     <div className="flex flex-col gap-3 p-4">
       <div className="flex flex-col gap-2">
-        <FilterChips options={STATUS_FILTERS} value={status} onChange={setStatus} />
-        <FilterChips options={PRIORITY_FILTERS} value={priority} onChange={setPriority} />
+        <Chips options={STATUS_FILTERS} value={status} onChange={setStatus} />
+        <Chips options={PRIORITY_FILTERS} value={priority} onChange={setPriority} />
       </div>
 
       {filtered.length === 0 ? (
