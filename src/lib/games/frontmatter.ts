@@ -60,3 +60,77 @@ export function stripWikilink(value: string): string {
   const match = /^\[\[(.+)\]\]$/.exec(value.trim());
   return match ? match[1] : value;
 }
+
+/**
+ * Rewrites one frontmatter key's value in place, preserving every other line
+ * verbatim (comments, key order, values this parser doesn't understand).
+ * Regenerating the whole block from `parseFrontmatter`'s output would silently
+ * drop anything outside its documented schema, so this only ever touches the
+ * one line it's asked about — same "minimal rewrite" approach as
+ * `checklist.ts#toggleChecklistLine`.
+ *
+ * If the key exists, replaces its line. If the key is missing but a
+ * frontmatter block exists, appends the line at the end of the block. If
+ * there's no frontmatter block at all, prepends a new one containing only
+ * this key.
+ */
+export function setFrontmatterField(content: string, key: string, value: string): string {
+  const newLine = `${key}: ${value}`;
+  const match = FRONTMATTER_RE.exec(content);
+  if (!match) {
+    return `---\n${newLine}\n---\n${content}`;
+  }
+
+  const [full, yamlBlock, body] = match;
+  const lines = yamlBlock.split("\n");
+  const index = lines.findIndex((line) => {
+    const separator = line.indexOf(":");
+    return separator >= 0 && line.slice(0, separator).trim() === key;
+  });
+
+  if (index >= 0) {
+    lines[index] = newLine;
+  } else {
+    lines.push(newLine);
+  }
+
+  return (
+    content.slice(0, match.index) +
+    `---\n${lines.join("\n")}\n---\n${body}` +
+    content.slice(match.index + full.length)
+  );
+}
+
+export interface NoteTemplateFields {
+  game: string;
+  type: string;
+  status?: string;
+  priority?: string;
+  title: string;
+}
+
+/**
+ * Today's date as `YYYY-MM-DD`, matching the vault's `updated:` convention.
+ * Uses the local calendar date, not `toISOString()`'s UTC date — the vault
+ * lives on a JST host, so a naive UTC-based `updated:` would be wrong for
+ * the first 9 hours of every local day.
+ */
+export function todayIso(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * Builds a brand-new note's full content: a frontmatter block matching the
+ * vault's Games/ schema, plus the `## メモ` section its checklist notes use.
+ */
+export function buildNoteTemplate({ game, type, status, priority, title }: NoteTemplateFields): string {
+  const lines = [`game: ${game}`, `type: ${type}`];
+  if (status) lines.push(`status: ${status}`);
+  if (priority) lines.push(`priority: ${priority}`);
+  lines.push(`updated: ${todayIso()}`);
+  return `---\n${lines.join("\n")}\n---\n\n# ${title}\n\n## メモ\n`;
+}

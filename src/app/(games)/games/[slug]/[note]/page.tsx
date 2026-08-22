@@ -1,17 +1,24 @@
 "use client";
 
-import { use, useCallback, useEffect, useMemo, useState } from "react";
+import { use, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { AsyncStatus } from "@/components/AsyncStatus";
-import { fetchFile, saveFile } from "@/lib/api-client";
+import { ChecklistEditor } from "@/components/games/ChecklistEditor";
+import { StatusEditor, PriorityEditor } from "@/components/games/NoteFieldEditor";
 import { editHref } from "@/lib/vault-route";
-import { decodeGameNotePath, noteTitle } from "@/lib/games/notes";
-import { parseFrontmatter, stripWikilink } from "@/lib/games/frontmatter";
-import { parseChecklist, toggleChecklistLine } from "@/lib/games/checklist";
+import { buildGameNote, decodeGameNotePath, noteTitle } from "@/lib/games/notes";
+import { parseFrontmatter, setFrontmatterField, stripWikilink, todayIso } from "@/lib/games/frontmatter";
+import {
+  appendChecklistItem,
+  parseChecklist,
+  removeChecklistLine,
+  setChecklistLabel,
+  toggleChecklistLine,
+} from "@/lib/games/checklist";
+import { useNoteContent } from "@/lib/games/useNoteContent";
+import { useGameNotes } from "@/lib/games/useGameNotes";
 
 const FIELD_LABELS: Record<string, string> = {
-  status: "状態",
-  priority: "優先度",
   updated: "更新日",
   parent: "親",
   next: "次",
@@ -25,55 +32,51 @@ interface PageProps {
 export default function GameNoteDetailPage({ params }: PageProps) {
   const { slug, note } = use(params);
   const path = decodeGameNotePath(slug, note);
+  return <GameNoteDetailView path={path} />;
+}
 
-  const [content, setContent] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+/** Split out from the page so it can be tested with a plain `path` prop, same reasoning as `GameNotesView` in `[slug]/page.tsx`. */
+export function GameNoteDetailView({ path }: { path: string }) {
+  const { patchNote } = useGameNotes();
 
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-    fetchFile(path)
-      .then((file) => {
-        if (!cancelled) setContent(file.content);
-      })
-      .catch((err: Error) => {
-        if (!cancelled) setError(err.message);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [path]);
+  // Keeps the shared game list (filters, checklist-progress badges) in sync
+  // with every successful edit here — cheaper than a full /api/games
+  // re-fetch, and wired through the hook itself so no mutation path can
+  // forget to call it (see useNoteContent's `onSaved` doc comment).
+  const onSaved = useCallback(
+    (next: string) => {
+      const note = buildGameNote(path, next);
+      if (note) patchNote(note);
+    },
+    [path, patchNote],
+  );
+
+  const { content, loading, error, mutate } = useNoteContent(path, onSaved);
 
   const data = useMemo(() => (content === null ? {} : parseFrontmatter(content).data), [content]);
   const checklist = useMemo(() => (content === null ? [] : parseChecklist(content)), [content]);
 
-  const handleToggle = useCallback(
-    async (line: number) => {
-      // Functional updates (not a `content` closure) so two toggles fired
-      // in quick succession each read the other's optimistic result rather
-      // than racing on a stale snapshot; a failed save re-toggles the same
-      // line on whatever content is current, undoing only its own change.
-      let nextContent: string | null = null;
-      setContent((current) => {
-        if (current === null) return current;
-        nextContent = toggleChecklistLine(current, line);
-        return nextContent;
-      });
-      if (nextContent === null) return;
-      try {
-        await saveFile(path, nextContent);
-      } catch (err) {
-        setContent((current) => (current === null ? current : toggleChecklistLine(current, line)));
-        setError((err as Error).message);
-      }
-    },
-    [path],
-  );
+  function setField(key: string, value: string) {
+    void mutate((current) =>
+      setFrontmatterField(setFrontmatterField(current, key, value), "updated", todayIso()),
+    );
+  }
+
+  function handleToggle(line: number) {
+    void mutate((current) => toggleChecklistLine(current, line));
+  }
+
+  function handleRelabel(line: number, label: string) {
+    void mutate((current) => setChecklistLabel(current, line, label));
+  }
+
+  function handleRemove(line: number) {
+    void mutate((current) => removeChecklistLine(current, line));
+  }
+
+  function handleAdd(label: string) {
+    void mutate((current) => appendChecklistItem(current, label));
+  }
 
   if (loading || (error && content === null)) {
     return <AsyncStatus loading={loading} error={content === null ? error : null} />;
@@ -81,6 +84,8 @@ export default function GameNoteDetailPage({ params }: PageProps) {
   if (content === null) return null;
 
   const title = noteTitle(path);
+  const status = typeof data.status === "string" ? data.status : undefined;
+  const priority = typeof data.priority === "string" ? data.priority : undefined;
 
   return (
     <div className="flex flex-col gap-4 p-4">
@@ -92,6 +97,11 @@ export default function GameNoteDetailPage({ params }: PageProps) {
         >
           編集
         </Link>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <StatusEditor value={status} onChange={(value) => setField("status", value)} />
+        <PriorityEditor value={priority} onChange={(value) => setField("priority", value)} />
       </div>
 
       <dl className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-zinc-500">
@@ -108,34 +118,15 @@ export default function GameNoteDetailPage({ params }: PageProps) {
         })}
       </dl>
 
-      {error && (
-        <p className="text-xs text-red-600 dark:text-red-400">{error}</p>
-      )}
+      {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
 
-      {checklist.length === 0 ? (
-        <p className="text-sm text-zinc-500">チェックリストはありません。</p>
-      ) : (
-        <ul className="flex flex-col gap-1">
-          {checklist.map((item) => (
-            <li
-              key={item.line}
-              style={{ paddingLeft: `${item.depth * 1.25}rem` }}
-            >
-              <label className="flex items-start gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={item.checked}
-                  onChange={() => handleToggle(item.line)}
-                  className="mt-0.5"
-                />
-                <span className={item.checked ? "text-zinc-400 line-through" : ""}>
-                  {item.label || <em className="text-zinc-400">(空)</em>}
-                </span>
-              </label>
-            </li>
-          ))}
-        </ul>
-      )}
+      <ChecklistEditor
+        items={checklist}
+        onToggle={handleToggle}
+        onRelabel={handleRelabel}
+        onRemove={handleRemove}
+        onAdd={handleAdd}
+      />
     </div>
   );
 }
