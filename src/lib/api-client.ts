@@ -1,6 +1,7 @@
 "use client";
 
 import type { FileContent, SearchResultItem, StatusResult, TreeEntry } from "@/types/vault";
+import type { GameNote } from "@/types/games";
 
 async function request<T>(input: string, init?: RequestInit): Promise<T> {
   const response = await fetch(input, init);
@@ -48,4 +49,8 @@ export function search(query: string): Promise<SearchResultItem[]> {
 
 export function fetchStatus(): Promise<StatusResult> {
   return request<StatusResult>(`/api/status`);
+}
+
+export function fetchGames(): Promise<GameNote[]> {
+  return request<GameNote[]>(`/api/games`);
 }
